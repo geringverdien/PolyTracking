@@ -1,0 +1,6 @@
+mediapipe
+opencv-contrib-python
+numpy
+Flask
+waitress
+pyngrok

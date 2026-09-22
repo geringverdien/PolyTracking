@@ -1,0 +1,7 @@
+.vscode/
+
+src/pose_landmarker_heavy.task
+src/__pycache__/
+src/.venv/
+
+Place/.poly/backups/
