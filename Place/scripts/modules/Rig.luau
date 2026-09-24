@@ -68,6 +68,15 @@ function Rig:AlignBone(C: {
     local Offset = C.Offset or Vector3.Zero
     local localA = Vector3.New(C.A.X, -C.A.Y, -C.A.Z) * scale
     local localB = Vector3.New(C.B.X, -C.B.Y, -C.B.Z) * scale
+    local poseOffset = localB - localA
+    local poseLength = poseOffset.Magnitude
+    if poseLength < 0.0001 then return end
+
+    local poseRotation = Quaternion.FromToRotation(
+        BONE_DIRECTION,
+        poseOffset / poseLength
+    )
+
     if C.Rotation then
         localA = C.Rotation * localA
         localB = C.Rotation * localB
@@ -78,19 +87,18 @@ function Rig:AlignBone(C: {
     local thickness = C.Thickness and (C.Thickness * scale) or (0.1 * scale)
     local tweenSpeed = C.Speed or 0
 
-    
+
     local offset = B - A
     local length = offset.Magnitude
 
     if length < 0.0001 then return end
 
     local position = (A + B) / 2
-    local direction = offset / length
 
-    local rotation = Quaternion.FromToRotation(
-        BONE_DIRECTION,
-        direction 
-    )
+    local rotation = poseRotation
+    if C.Rotation then
+        rotation = C.Rotation * rotation
+    end
 
     local size = Vector3.New(thickness) + BONE_DIRECTION * (length - thickness)
 
@@ -151,6 +159,15 @@ function Rig:AlignPart(C: {
     local Offset = C.Offset or Vector3.Zero
     local localA = Vector3.New(C.A.X, -C.A.Y, -C.A.Z) * scale
     local localB = Vector3.New(C.B.X, -C.B.Y, -C.B.Z) * scale
+    local poseOffset = localB - localA
+    local poseLength = poseOffset.Magnitude
+    if poseLength < 0.0001 then return end
+
+    local poseRotation = Quaternion.FromToRotation(
+        BONE_DIRECTION,
+        poseOffset / poseLength
+    )
+
     if C.Rotation then
         localA = C.Rotation * localA
         localB = C.Rotation * localB
@@ -160,19 +177,19 @@ function Rig:AlignPart(C: {
     local B = Offset + localB
     local tweenSpeed = C.Speed or 0
 
-    
+
     local offset = B - A
     local length = offset.Magnitude
 
     if length < 0.0001 then return end
 
     local position = (A + B) / 2
-    local direction = offset / length
 
-    local rotation = Quaternion.FromToRotation(
-        BONE_DIRECTION,
-        direction 
-    )
+    local rotation = poseRotation
+    if C.Rotation then
+        rotation = C.Rotation * rotation
+    end
+
 
     if tweenSpeed == 0 then
         targetPart.Position = position

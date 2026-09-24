@@ -19,6 +19,8 @@ local swordSlash: Sound = swordModel:WaitChild("Slash")
 
 local rpgModel: Model = ToyFolder:WaitChild("RPG")
 local rpgHandle: Part = rpgModel:WaitChild("Handle")
+local rpgBarrel: Part = rpgHandle:WaitChild("Barrel")
+local rpgShoot: Sound = rpgModel:WaitChild("Shoot")
 
 
 local sizeFactor = 0.2
@@ -35,7 +37,8 @@ local toys = {
     rpg = {
         model = rpgModel,
         handle = rpgHandle,
-        pointOffset = Vector3.New(0, -3, 0)
+        pointOffset = Vector3.New(0, -2.5, 0),
+        debounce = false
     }
 }
 
@@ -45,15 +48,43 @@ for toyName, toyData in pairs(toys) do
     toyData.updateConnection = nil
 end
 
+local function getCreatorRotation(): Quaternion
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.IsCreator and plr.Character then
+            return plr.Character.Quaternion
+        end
+    end
+
+    return Quaternion.New()
+end
+
+
+local function getToyRotation(direction: Vector3): Quaternion
+    local rigRotation = getCreatorRotation()
+    return rigRotation * Quaternion.FromToRotation(
+        Vector3.New(0, 1, 0),
+        direction / direction.Magnitude
+    )
+end
+
+local function getToyDirection(toy): Vector3
+    local rigRotation = getCreatorRotation()
+    local inv = rigRotation:Inverse()
+    local direction = inv * (RightHand.Position - Root.Position)
+    return direction + toy.pointOffset
+end
+
 EquipToy.InvokedServer:Connect(function(plr: Player, msg: NetMessage)
     if not plr.IsCreator then return end
     if Root.Position == Vector3.Zero then return end
 
     local targetToy = msg:GetString("toy")
+
+    if toys.equipped then
+        toys.equipped.toggleEquip(false)
+    end
+
     if targetToy == "none" then
-        if toys.equipped then
-            toys.equipped.toggleEquip(false)
-        end
         toys.equipped = nil
         return
     end
@@ -103,20 +134,18 @@ local function scaleToy(toy)
     toy.model.Size = Vector3.New(toyScale)
 end
 
+local function alignTo(toy, alignPart: Part)
+    local direction = getToyDirection(toy)
+    if direction.Magnitude < 0.0001 then return end
+
+    toy.model.Position = alignPart.Position
+    toy.model.Quaternion = getToyRotation(direction)
+end
 
 -- Sword
 swordToy.update = function(dt: number)
     if toys.equipped ~= swordToy then return end
-
-    local direction = RightHand.Position - Root.Position
-    direction += swordToy.pointOffset
-    if direction.Magnitude < 0.0001 then return end
-
-    swordModel.Position = RightHand.Position
-    swordModel.Quaternion = Quaternion.FromToRotation(
-        Vector3.New(0, 1, 0),
-        direction / direction.Magnitude
-    )
+    alignTo(swordToy, RightHand)
 end
 
 swordToy.toggleEquip = function(isEquipped: boolean)
@@ -149,16 +178,7 @@ end)
 -- RPG
 rpgToy.update = function(dt: number)
     if toys.equipped ~= rpgToy then return end
-
-    local direction = RightHand.Position - Root.Position
-    direction += rpgToy.pointOffset
-    if direction.Magnitude < 0.0001 then return end
-
-    rpgModel.Position = RightHand.Position
-    rpgModel.Quaternion = Quaternion.FromToRotation(
-        Vector3.New(0, 1, 0),
-        direction / direction.Magnitude
-    )
+    alignTo(rpgToy, RightHand)
 end
 
 rpgToy.toggleEquip = function(isEquipped: boolean)
@@ -171,3 +191,58 @@ rpgToy.toggleEquip = function(isEquipped: boolean)
     end
 end
 
+rpgToy.activated = function()
+    if rpgToy.debounce then return end
+    rpgToy.debounce = true
+    spawn(function()
+        wait(3)
+        rpgToy.debounce = false
+    end)
+
+    rpgShoot:Play()
+
+    local shootDirection = rpgBarrel.Quaternion * Vector3.New(0, 1, 0)
+    local _raycast = Environment:Raycast(
+        rpgBarrel.Position,
+        shootDirection,
+        1000,
+        {rpgModel, Players:GetPlayers()[1]}
+    )
+
+    local rocket: Part = Instance.New("Part") do
+        rocket.Name = "rocket"
+        rocket.Anchored = true
+        rocket.Size = Vector3.New(0.5, 1.5, 0.5) * Vector3.New(toyScale)
+        rocket.Position = rpgBarrel.Position
+        rocket.Quaternion = rpgBarrel.Quaternion
+        rocket.Parent = Environment
+    end
+
+    local rocketConnection = nil
+    local rocketTouched = nil
+    local shootStart = time()
+
+    rocketConnection = Hooks.Updated:Connect(function(dt)
+        if time() - shootStart > 5 then
+            rocket:Destroy()
+            rocketConnection:Disconnect()
+            return
+        end
+
+        rocket.Position += shootDirection * (dt * 40)
+    end)
+
+    rocketTouched = rocket.Touched:Connect(function(hit: Physical)
+        if hit:IsDescendantOf(rpgModel) or hit:IsDescendantOf(Players:GetPlayers()[1]) then return end
+        rocketConnection:Disconnect()
+        rocketTouched:Disconnect()
+        local explosion: Explosion = Instance.New("Explosion")
+        explosion.Position = rocket.Position
+        explosion.Parent = Environment
+        rocket:Destroy()
+        wait(2)
+        explosion:Destroy()
+        rocketTouched = nil
+        rocketConnection = nil
+    end)
+end

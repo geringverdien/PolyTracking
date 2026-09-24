@@ -112,6 +112,7 @@ local function requestFrames(currentURL: string): nil
     while URL == currentURL do
         local requestSuccess, dataBuffer = ServerRequest:GetData(currentURL, firstRequest)
         if requestSuccess then
+            print("got data")
             enqueueFrames(dataBuffer)
         end
 
