@@ -1,5 +1,6 @@
 # PolyTracking
 Full Body motion tracking in Polytoria powered by Mediapipe :3
+https://polytoria.com/places/144237
 
 # Requirements
 - Python v3.14.7 or higher
