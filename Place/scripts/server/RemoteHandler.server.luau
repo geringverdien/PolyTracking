@@ -1,10 +1,10 @@
-local SetURL: NetworkEvent = ScriptService:WaitChild("SetURL")
+local SetURL: NetworkEvent = Hidden:WaitChild("SetURL")
 local URLValue: StringValue = ServerHidden:WaitChild("URL")
 
-local SetScale: NetworkEvent = ScriptService:WaitChild("SetScale")
+local SetScale: NetworkEvent = Hidden:WaitChild("SetScale")
 local ScaleValue: StringValue = ServerHidden:WaitChild("Scale")
 
-local SetFPS: NetworkEvent = ScriptService:WaitChild("SetFPS")
+local SetFPS: NetworkEvent = Hidden:WaitChild("SetFPS")
 local FPSValue: IntValue = ServerHidden:WaitChild("FPS")
 
 

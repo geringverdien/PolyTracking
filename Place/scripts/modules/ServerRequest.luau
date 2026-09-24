@@ -17,7 +17,7 @@ function module:GetData(url: string, clearBacklog: boolean): (boolean, buffer)
         return false, nil 
     end 
 
-    print("got buffer request")
+    --print("got buffer request")
     return true, res.Buffer
 end
 

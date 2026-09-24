@@ -1,6 +1,6 @@
-local SetURL: NetworkEvent = ScriptService:WaitChild("SetURL")
-local SetScale: NetworkEvent = ScriptService:WaitChild("SetScale")
-local SetFPS: NetworkEvent = ScriptService:WaitChild("SetFPS")
+local SetURL: NetworkEvent = Hidden:WaitChild("SetURL")
+local SetScale: NetworkEvent = Hidden:WaitChild("SetScale")
+local SetFPS: NetworkEvent = Hidden:WaitChild("SetFPS")
 
 local lp = Players.LocalPlayer
 

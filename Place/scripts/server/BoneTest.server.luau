@@ -15,8 +15,8 @@ Rig:AlignBone({
     Scale = 1
 })
 
-local p: Player = Players:GetPlayers()[1]
-local char = p.Character
+-- local p: Player = Players:GetPlayers()[1]
+-- local char = p.Character
 
 -- while wait() do
 --     a.Position = char.Position
